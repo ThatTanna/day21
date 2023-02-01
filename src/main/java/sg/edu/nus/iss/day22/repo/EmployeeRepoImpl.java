@@ -23,54 +23,55 @@ public class EmployeeRepoImpl implements EmployeeRepo {
 
     @Override
     public List<Employee> retrieveEmployeeList() {
-        String selectSQL =
-        "select e.id emp_id, e.first_name, e.last_name, e.salary, d.id dep_id, d.full_name, d.relationship, d.birth_date from employee e inner join dependant d on e.id = d.employee_id";
+        String selectSQL = "select e.id emp_id, e.first_name, e.last_name, e.salary, " +
+                "d.id dep_id, d.full_name, d.relationship, d.birth_date " +
+                "from employee e inner join dependant d on e.id = d.employee_id";
 
-            return jdbcTemplate.query(selectSQL, new ResultSetExtractor<List<Employee>>() {
+        return jdbcTemplate.query(selectSQL, new ResultSetExtractor<List<Employee>>() {
 
-                @Override
-                public List<Employee> extractData(ResultSet rs) throws SQLException, DataAccessException {
-                    List<Employee> employees = new ArrayList<Employee>();
+            @Override
+            public List<Employee> extractData(ResultSet rs) throws SQLException, DataAccessException {
+                List<Employee> employees = new ArrayList<Employee>();
 
-                    while (rs.next()) {
-                        Employee emp = new Employee();
-                        emp.setId(rs.getInt("emp_id"));
-                        emp.setFirstName(rs.getString("first_name"));
-                        emp.setLastName(rs.getString("last_name"));
-                        emp.setSalary(rs.getInt("salary"));
-                        emp.setDependants(new ArrayList<Dependant>());
+                while (rs.next()) {
+                    Employee emp = new Employee();
+                    emp.setId(rs.getInt("emp_id"));
+                    emp.setFirstName(rs.getString("first_name"));
+                    emp.setLastName(rs.getString("last_name"));
+                    emp.setSalary(rs.getInt("salary"));
+                    emp.setDependants(new ArrayList<Dependant>());
 
-                        // Dependant dep;
-                        Dependant dep = new Dependant();
-                        dep.setId(rs.getInt("dep_id"));
-                        dep.setFullName(rs.getString("full_name"));
-                        dep.setRelationship(rs.getString("relationship"));
-                        dep.setBirthDate(rs.getDate("birth_date"));
+                    // Dependant dep;
+                    Dependant dep = new Dependant();
+                    dep.setId(rs.getInt("dep_id"));
+                    dep.setFullName(rs.getString("full_name"));
+                    dep.setRelationship(rs.getString("relationship"));
+                    dep.setBirthDate(rs.getDate("birth_date"));
 
-                        if (employees.size() == 0) {
+                    if (employees.size() == 0) {
+                        emp.getDependants().add(dep);
+                        employees.add(emp);
+                    } else {
+                        List<Employee> eList = employees.stream().filter(e -> e.getId() == emp.getId())
+                                .collect(Collectors.toList());
+
+                        if (eList.size() == 0) {
                             emp.getDependants().add(dep);
                             employees.add(emp);
                         } else {
-                            List<Employee> eList = employees.stream().filter(e -> e.getId() == emp.getId())
-                            .collect(Collectors.toList());
+                            int idx = employees.indexOf(eList.get(0));
 
-                            if (eList.size() == 0) {
-                                emp.getDependants().add(dep);
-                                employees.add(emp);
-                            } else {
-                                int idx = employees.indexOf(eList.get(0));
-
-                                if (idx >= 0) {
-                                    employees.get(idx).getDependants().add(dep);
-                                }
+                            if (idx >= 0) {
+                                employees.get(idx).getDependants().add(dep);
                             }
                         }
-                        
                     }
-                    return employees;
+
                 }
-                
-            });
+                return employees;
+            }
+
+        });
     }
-    
+
 }
